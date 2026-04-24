@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="description" content="Digital Suggestion System for Handicrafts Using Local Materials - Municipality of Carles, Iloilo">
+  <title>Carles Handicraft Suggestion System | #CarlesdaBest</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Roboto, system-ui, sans-serif; background: #e9ecef; }
+    
+    .hero-banner {
+      width: 100%;
+      background: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.55)), url('https://holyglobe.com/wp-content/uploads/2021/04/islas-de-gigantes-island-hopping-shared-tour-in-iloilo-with-fresh-seafood-lunch-1536x1117.jpg');
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: white;
+      height: 500px;
+    }
+    
+    .hero-content {
+      max-width: 800px;
+      padding: 2rem;
+      width: 100%;
+    }
+    
+    .hero-badge {
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      display: inline-block;
+      padding: 0.5rem 1.2rem;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      margin-bottom: 1.5rem;
+      font-weight: 500;
+    }
+    
+    .hero-content h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+    }
+    
+    .hero-content p {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      opacity: 0.95;
+    }
+    
+    .hero-search {
+      display: flex;
+      background: white;
+      border-radius: 60px;
+      overflow: hidden;
+      max-width: 550px;
+      margin: 0 auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    
+    .hero-search input {
+      flex: 1;
+      padding: 1rem 1.5rem;
+      border: none;
+      font-size: 1rem;
+      outline: none;
+    }
+    
+    .hero-search button {
+      background: #2d5016;
+      border: none;
+      padding: 0 2rem;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 1rem;
+    }
+    
+    .hero-search button:hover {
+      background: #1e3a0c;
+    }
+    
+    .search-results-message {
+      background: #e9f5db;
+      padding: 0.8rem 1.2rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .clear-search-btn {
+      background: #c17a5e;
+      color: white;
+      border: none;
+      padding: 0.3rem 1rem;
+      border-radius: 40px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    
+    .clear-search-btn:hover { background: #a05d42; }
+    
+    @media (max-width: 768px) {
+      .hero-banner { height: 400px; }
+      .hero-content h1 { font-size: 2rem; }
+      .hero-content p { font-size: 0.9rem; }
+      .hero-search { flex-direction: column; border-radius: 30px; }
+      .hero-search input { padding: 0.8rem 1.2rem; }
+      .hero-search button { padding: 0.8rem; }
+    }
+    
+    .app-wrapper {
+      display: flex;
+      max-width: auto-fill;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+    
+    .sidebar {
+      width: 280px;
+      background: linear-gradient(180deg, #2d5016 0%, #1e3a0c 100%);
+      color: white;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+      z-index: 200;
+    }
+    
+    .sidebar-header {
+      padding: 1.8rem 1.2rem;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      margin-bottom: 1rem;
+    }
+    
+    .sidebar-header h1 {
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .sidebar-header .subtitle {
+      font-size: 0.7rem;
+      opacity: 0.8;
+      line-height: 1.4;
+    }
+    
+    .sidebar-header .location-badge {
+      background: rgba(255,255,255,0.2);
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 40px;
+      font-size: 0.6rem;
+      margin-top: 0.8rem;
+    }
+    
+    .sidebar-nav {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 0 1rem;
+    }
+    
+    .nav-tab {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 1rem 1.2rem;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      border-radius: 16px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 1rem;
+      width: 100%;
+      text-align: left;
+    }
+    
+    .nav-tab i { width: 24px; font-size: 1.2rem; }
+    .nav-tab:hover { background: rgba(255,255,255,0.25); transform: translateX(5px); }
+    .nav-tab.active { background: white; color: #2d5016; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    
+    .main-content {
+      flex: 1;
+      background: #f5f7f0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    .content-section {
+      display: none;
+      padding: 1.8rem;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .content-section.active { display: block; }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .menu-toggle {
+      display: none;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      background: #2d5016;
+      color: white;
+      border: none;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      font-size: 1.4rem;
+      cursor: pointer;
+      z-index: 1001;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    @media (max-width: 768px) {
+      .menu-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .sidebar {
+        position: fixed;
+        left: -280px;
+        transition: left 0.3s ease;
+        z-index: 999;
+        height: 100%;
+        top: 0;
+      }
+      .sidebar.open { left: 0; }
+      .main-content { width: 100%; }
+      .content-section { padding: 1.2rem; }
+      .craft-item { flex-direction: column; }
+      .craft-image { width: 100%; height: 170px; }
+      .material-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+    }
+    
+    .material-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 1.2rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .material-card {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: transform 0.25s, box-shadow 0.25s;
+      border: 2px solid transparent;
+    }
+    
+    .material-card:hover, .material-card.selected { 
+      transform: translateY(-5px); 
+      box-shadow: 0 14px 28px rgba(0,0,0,0.15); 
+      border-color: #2d5016; 
+    }
+    
+    .material-image { width: 100%; height: 140px; object-fit: cover; background: #e9f5db; }
+    .material-info { padding: 0.9rem; text-align: center; }
+    .material-name { font-weight: 800; color: #2d5016; font-size: 1rem; }
+    .material-origin { font-size: 0.7rem; color: #006994; margin-top: 4px; }
+    .material-sustainability { font-size: 0.65rem; color: #87a878; margin-top: 4px; }
+    
+    .craft-list { display: flex; flex-direction: column; gap: 1.25rem; }
+    
+    .craft-item {
+      background: white;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 5px 12px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: row;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid #eef2e6;
+    }
+    
+    .craft-item:hover { transform: scale(1.01); box-shadow: 0 12px 24px rgba(0,0,0,0.12); border-color: #87a878; }
+    .craft-image { width: 130px; height: 130px; object-fit: cover; background: #e9f5db; flex-shrink: 0; }
+    .craft-details { padding: 1rem 1.2rem; flex: 1; }
+    .craft-title { font-size: 1.2rem; color: #2d5016; font-weight: 800; }
+    
+    .cultural-tag { background: #c17a5e; color: white; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.7rem; display: inline-block; margin-top: 5px; }
+    
+    #map { height: 450px; border-radius: 24px; margin-bottom: 1.5rem; box-shadow: 0 6px 14px rgba(0,0,0,0.1); z-index: 1; border: 2px solid #e9f5db; }
+    
+    .map-controls { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .map-btn { background: #2d5016; color: white; border: none; padding: 0.4rem 1rem; border-radius: 40px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; }
+    .map-btn:hover { background: #1e3a0c; transform: translateY(-2px); }
+    
+    .location-list { display: flex; flex-direction: column; gap: 0.8rem; max-height: 350px; overflow-y: auto; }
+    .location-item { background: white; padding: 1rem; border-radius: 18px; border-left: 5px solid #2d5016; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+    .location-item:hover { transform: translateX(6px); background: #f9fbf5; }
+    .location-name { font-weight: 800; color: #2d5016; display: flex; align-items: center; gap: 6px; }
+    .location-address { font-size: 0.8rem; color: #5a6e5a; margin-top: 5px; }
+    
+    .suggestion-box { background: linear-gradient(135deg, #e9f5db 0%, #d4e8c4 100%); border-radius: 24px; padding: 1.2rem; margin-top: 1.5rem; border-left: 6px solid #006994; }
+    .suggestion-box h3 { color: #2d5016; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 8px; }
+    .suggestion-items { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .suggestion-chip { background: white; padding: 0.5rem 1.2rem; border-radius: 40px; font-size: 0.85rem; font-weight: 600; color: #2d5016; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: all 0.2s; }
+    .suggestion-chip:hover { background: #2d5016; color: white; transform: translateY(-2px); }
+    
+    /* MODAL STYLES */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.85);
+      z-index: 2000;
+      overflow-y: auto;
+      backdrop-filter: blur(4px);
+    }
+    
+    .modal-content {
+      background: white;
+      margin: 1rem auto;
+      max-width: 800px;
+      width: 90%;
+      border-radius: 24px;
+      overflow: hidden;
+      position: relative;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .close-modal {
+      position: absolute;
+      top: 0.8rem;
+      right: 0.8rem;
+      background: white;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      cursor: pointer;
+      z-index: 25;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-image-container {
+      width: 100%;
+      height: 280px;
+      overflow: hidden;
+      background: #1e3a0c;
+      flex-shrink: 0;
+    }
+    
+    #modalMainImage {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .modal-body {
+      padding: 1.2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    
+    #modalTitle {
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+      padding-right: 2rem;
+    }
+    
+    #modalMeta {
+      margin-bottom: 0.8rem;
+    }
+    
+    #modalDescription {
+      margin-bottom: 1rem;
+      line-height: 1.5;
+      color: #333;
+    }
+    
+    .gallery-section {
+      margin-top: 1rem;
+    }
+    
+    .gallery-section h3 {
+      font-size: 1rem;
+      margin-bottom: 0.8rem;
+      color: #2d5016;
+    }
+    
+    #photoGalleryThumbs {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 8px 0 12px 0;
+      margin-bottom: 1rem;
+      scrollbar-width: thin;
+    }
+    
+    #photoGalleryThumbs::-webkit-scrollbar {
+      height: 5px;
+    }
+    
+    #photoGalleryThumbs::-webkit-scrollbar-track {
+      background: #e9f5db;
+      border-radius: 10px;
+    }
+    
+    #photoGalleryThumbs::-webkit-scrollbar-thumb {
+      background: #2d5016;
+      border-radius: 10px;
+    }
+    
+    .gallery-thumb {
+      width: 80px;
+      height: 70px;
+      object-fit: cover;
+      border-radius: 12px;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    
+    .gallery-thumb:hover {
+      transform: scale(1.05);
+      border-color: #2d5016;
+    }
+    
+    .gallery-thumb.active {
+      border-color: #ffc107;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    
+    .location-section {
+      background: linear-gradient(135deg, #e9f5db, #d4e8c4);
+      border-radius: 16px;
+      padding: 1rem;
+      margin-top: 0.5rem;
+    }
+    
+    .location-section h4 {
+      color: #2d5016;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+    
+    .btn-map-view {
+      background: #006994;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 40px;
+      margin-top: 0.8rem;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s;
+      font-size: 0.85rem;
+    }
+    
+    .btn-map-view:hover {
+      background: #004d66;
+      transform: translateY(-2px);
+    }
+    
+    .location-tag {
+      display: inline-block;
+      background: white;
+      padding: 0.2rem 0.7rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      margin: 0.2rem;
+      color: #2d5016;
+    }
+    
+    .location-tag i {
+      color: #006994;
+      margin-right: 4px;
+    }
+    
+    .ratings-section {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: #f9fbf5;
+      border-radius: 24px;
+      border: 1px solid #e9f5db;
+    }
+    
+    .rating-stars { display: flex; gap: 8px; margin: 1rem 0; justify-content: center; }
+    .star { font-size: 2rem; cursor: pointer; color: #ddd; transition: color 0.2s; }
+    .star:hover, .star.active { color: #ffc107; }
+    .review-input { width: 100%; padding: 0.8rem; border: 2px solid #e9f5db; border-radius: 16px; font-family: inherit; resize: vertical; margin: 1rem 0; }
+    .review-item { background: white; padding: 1rem; border-radius: 16px; margin-bottom: 1rem; border-left: 4px solid #2d5016; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .review-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; flex-wrap: wrap; }
+    .reviewer-name { font-weight: bold; color: #2d5016; }
+    .review-rating { color: #ffc107; }
+    .review-date { font-size: 0.7rem; color: #999; }
+    .review-comment { color: #333; line-height: 1.4; margin-top: 0.5rem; }
+    .average-rating { text-align: center; padding: 1rem; background: linear-gradient(135deg, #2d5016, #1e3a0c); color: white; border-radius: 16px; margin-bottom: 1rem; }
+    .average-rating .big-rating { font-size: 2.5rem; font-weight: bold; }
+    .average-rating .stars-big { font-size: 1.2rem; letter-spacing: 4px; }
+    .btn-submit-review { background: #2d5016; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 40px; cursor: pointer; font-weight: bold; width: 100%; transition: all 0.2s; }
+    .btn-submit-review:hover { background: #1e3a0c; transform: translateY(-2px); }
+    .reviews-list { max-height: 400px; overflow-y: auto; margin-top: 1rem; }
+    
+    .official-info-card { background: rgba(255,255,255,0.1); border-radius: 16px; padding: 1rem; margin: 1rem; border: 1px solid rgba(255,255,255,0.2); }
+    
+    .admin-panel {
+      background: #e9f5db;
+      padding: 1rem;
+      border-radius: 16px;
+      margin-top: 1rem;
+      border: 1px solid #c8e0b0;
+    }
+    
+    .admin-panel h4 {
+      color: #2d5016;
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .admin-btn {
+      background: #2d5016;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 40px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-top: 8px;
+      font-size: 0.8rem;
+    }
+    
+    .admin-btn:hover {
+      background: #1e3a0c;
+    }
+    
+    .admin-btn.gray {
+      background: #006994;
+    }
+    
+    .admin-btn.gray:hover {
+      background: #004d66;
+    }
+  </style>
+</head>
+<body>
+  <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+
+  <div class="hero-banner">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <i class="fas fa-map-marker-alt"></i> Gigantes Island, Carles, Iloilo
+      </div>
+      <h1>Discover Authentic Carlesanon Handicrafts</h1>
+      <p>Handwoven baskets · Buri hats · Shell crafts · Bamboo artisanal products</p>
+      <div class="hero-search">
+        <input type="text" placeholder="Search crafts (bamboo, pandan, shell, buri) or locations (Bancal, Gigantes, Cawayan)..." id="heroSearchInput">
+        <button onclick="handleSearch()"><i class="fas fa-search"></i> Search</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-wrapper">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h1><i class="fas fa-leaf"></i> SUGGEST:<br>Carles Handicraft</h1>
+        <div class="subtitle">Digital Suggestion System for Handicrafts Using Local Materials</div>
+        <div class="location-badge"><i class="fas fa-map-marker-alt"></i> Municipality of Carles, Iloilo · Bancal Port</div>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <button class="nav-tab active" id="tabMaterials"><i class="fas fa-seedling"></i><span>Materials</span></button>
+        <button class="nav-tab" id="tabCrafts"><i class="fas fa-hands"></i><span>Crafts</span></button>
+        <button class="nav-tab" id="tabMap"><i class="fas fa-map-marker-alt"></i><span>Geotagged Map</span></button>
+        <button class="nav-tab" id="tabAbout"><i class="fas fa-landmark"></i><span>Heritage & About</span></button>
+      </nav>
+      
+      <div class="official-info-card">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0.8rem;">
+          <i class="fas fa-landmark" style="font-size: 1.2rem;"></i>
+          <h3 style="margin: 0; font-size: 0.85rem;">Municipality of Carles</h3>
+        </div>
+        <div style="display: grid; gap: 0.4rem; font-size: 0.65rem;">
+          <div><i class="fas fa-map-pin"></i> Bancal Port, Carles, Iloilo, 5019</div>
+          <div><i class="fas fa-phone"></i> +63 945 799 3491</div>
+          <div><i class="fas fa-envelope"></i> lgucarlestourism@gmail.com</div>
+          <div><i class="fab fa-instagram"></i> @carlestourism</div>
+        </div>
+        <hr style="margin: 0.6rem 0; border-color: rgba(255,255,255,0.2);">
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <a href="https://www.facebook.com/CarlesTourismOfficial" target="_blank" style="background:#1877f2; color:white; padding:4px 8px; border-radius:20px; text-decoration:none; font-size:0.65rem;"><i class="fab fa-facebook"></i> Official Page</a>
+          <a href="https://www.facebook.com/CarlesdaBestofficial" target="_blank" style="background:#e4405f; color:white; padding:4px 8px; border-radius:20px; text-decoration:none; font-size:0.65rem;"><i class="fab fa-facebook"></i> #CarlesdaBest</a>
+        </div>
+        <div class="hashtag" style="text-align: center; margin-top: 0.6rem; font-size: 0.55rem; opacity: 0.8;">
+          <i class="fas fa-tag"></i> #CarlesdaBest #CarlesTourism
+        </div>
+      </div>
+      
+      <div style="padding: 1rem; font-size: 0.65rem; opacity: 0.6; text-align: center; margin-top: auto;">
+        <i class="fas fa-check-circle"></i> Supporting Local Artisans
+      </div>
+    </aside>
+    
+    <main class="main-content">
+      <section id="materials" class="content-section active">
+        <h2 style="margin-bottom: 1rem; color: #2d5016;"><i class="fas fa-box-open"></i> Local Materials of Carles</h2>
+        <div class="material-grid" id="materialGrid"></div>
+        <div id="materialDetail" style="display: none;">
+          <h3 style="color: #2d5016; margin: 1rem 0;"><i class="fas fa-hands-helping"></i> Traditional Crafts from this Material</h3>
+          <div class="craft-list" id="materialCrafts"></div>
+          <div class="suggestion-box" id="suggestionBox"></div>
+        </div>
+      </section>
+      
+      <section id="crafts" class="content-section">
+        <div id="craftsSearchMessage" class="search-results-message" style="display: none;"></div>
+        <h2 style="margin-bottom: 1rem; color: #2d5016;"><i class="fas fa-folder-open"></i> All Handicrafts of Carles</h2>
+        <div class="craft-list" id="allCrafts"></div>
+        
+        <div class="ratings-section">
+          <h3 style="color: #2d5016; text-align: center;"><i class="fas fa-star"></i> Rate & Review Handicrafts</h3>
+          <div id="averageRatingDisplay" class="average-rating">
+            <div class="big-rating" id="avgRating">0.0</div>
+            <div class="stars-big" id="avgStars">☆☆☆☆☆</div>
+            <div id="totalReviews">0 reviews</div>
+          </div>
+          
+          <div style="background: white; padding: 1.5rem; border-radius: 16px; text-align: center;">
+            <h4><i class="fas fa-star"></i> Rate Our Handicrafts</h4>
+            <p>Your feedback helps improve Carles tourism! #CarlesdaBest</p>
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSeXDb1q1CWrzQHDLPkSirA8XHRjfBogJ-KCehvvWPgufl4A8w/viewform?usp=header" target="_blank" class="btn-submit-review" style="display: inline-block; width: auto; padding: 0.8rem 2rem; text-decoration: none;">
+              <i class="fab fa-google"></i> Write a Review on Google Forms
+            </a>
+          </div>
+          
+          <h4 style="margin-top: 1.5rem;"><i class="fas fa-comments"></i> Visitor Reviews</h4>
+          <div id="reviewsList" class="reviews-list"><p style="text-align:center; color:#999;">Loading reviews...</p></div>
+          
+          <div class="admin-panel">
+            <h4><i class="fas fa-chart-bar"></i> Tourism Office Dashboard</h4>
+            <p style="font-size:0.8rem; color:#555; margin-bottom:0.8rem;">
+              <i class="fas fa-info-circle"></i> Click below to export or print all visitor reviews.
+            </p>
+            <button class="admin-btn" onclick="exportReviews()">
+              <i class="fas fa-download"></i> Export to CSV
+            </button>
+            <button class="admin-btn gray" onclick="printReviews()">
+              <i class="fas fa-print"></i> Print Reports
+            </button>
+          </div>
+        </div>
+      </section>
+      
+      <section id="map-section" class="content-section">
+        <h2 style="margin-bottom: 1rem; color: #2d5016;"><i class="fas fa-map"></i> Geotagged Material Sources in Carles, Iloilo</h2>
+        <div class="map-controls">
+          <button class="map-btn" id="zoomToBancal"><i class="fas fa-location-dot"></i> Bancal</button>
+          <button class="map-btn" id="zoomToCawayan"><i class="fas fa-location-dot"></i> Cawayan</button>
+          <button class="map-btn" id="zoomToAslom"><i class="fas fa-location-dot"></i> Aslom</button>
+          <button class="map-btn" id="zoomToGigantes"><i class="fas fa-island"></i> Gigantes Island</button>
+          <button class="map-btn" id="zoomToSicogon"><i class="fas fa-island"></i> Sicogon Island</button>
+          <button class="map-btn" id="resetMap"><i class="fas fa-globe"></i> Reset View</button>
+        </div>
+        <div id="map"></div>
+        <h3><i class="fas fa-location-dot"></i> Artisan Communities & Collection Sites</h3>
+        <div class="location-list" id="locationList"></div>
+        <p style="margin-top: 1rem; font-size: 0.8rem; color: #666; text-align: center;">
+          <i class="fas fa-info-circle"></i> Geotagged locations verified: Barangay Bancal, Barangay Cawayan, Barangay Aslom, Gigantes Island (Gigantes Norte & Sur)
+        </p>
+      </section>
+      
+      <section id="about" class="content-section">
+        <h2 style="color: #2d5016; margin-bottom: 1rem;"><i class="fas fa-landmark"></i> Cultural Heritage Documentation</h2>
+        <div style="background: #e9f5db; padding: 1.5rem; border-radius: 24px; margin-bottom: 1.5rem;">
+          <h3><i class="fas fa-quote-left"></i> Study Background</h3>
+          <p>This Digital Suggestion System for Handicrafts Using Local Materials was developed for the <strong>Municipality of Carles, Iloilo</strong> — home to Gigantes Island and rich traditions of buri weaving, bamboo craft, pandan mat-making, and shellcraft.</p>
+          <p style="margin-top: 0.8rem;">The system addresses challenges faced by local artisans: limited market access, weak online visibility, and lack of product documentation. Tourists can now discover authentic Carlesanon handicrafts and learn about material origins.</p>
+          <p style="margin-top: 0.8rem;"><i class="fas fa-tags"></i> <strong>#CarlesdaBest</strong> – Supporting local artisans and sustainable tourism.</p>
+        </div>
+        <h3><i class="fas fa-chalkboard-user"></i> For Carlesanon Artisans</h3>
+        <div style="background: linear-gradient(135deg, #2d5016, #1e3a0c); color: white; padding: 1.5rem; border-radius: 24px;">
+          <p><i class="fas fa-lightbulb"></i> This system helps you:</p>
+          <ul style="margin-top: 0.8rem; margin-left: 1.5rem;">
+            <li>Learn what crafts you can make from local materials (buri, bamboo, pandan, shells)</li>
+            <li>Find where to source materials using the geotagged map</li>
+            <li>Preserve traditional craft knowledge for future generations</li>
+            <li>Connect with tourists seeking authentic Carles products</li>
+          </ul>
+        </div>
+        <div class="facebook-feed" style="margin: 2rem 0; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+          <div style="background: #1877f2; color: white; padding: 0.8rem; text-align: center;">
+            <i class="fab fa-facebook"></i> Official Updates from Carles Tourism
+          </div>
+          <iframe src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2FCarlesTourismOfficial&tabs=timeline&width=340&height=500&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId" width="100%" height="500" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+        </div>
+      </section>
+      
+      <div class="eval-badge" style="background: #c17a5e; color: white; text-align: center; padding: 0.5rem; font-size: 0.7rem; margin-top: 1rem;">
+        <i class="fas fa-check-circle"></i> In partnership with <strong>Carles Tourism - Official</strong> · #CarlesdaBest
+      </div>
+    </main>
+  </div>
+
+  <div id="craftModal" class="modal">
+    <div class="modal-content">
+      <button class="close-modal" onclick="closeCraftModal()">&times;</button>
+      <div class="modal-image-container">
+        <img id="modalMainImage" src="" alt="Craft">
+      </div>
+      <div class="modal-body">
+        <h2 id="modalTitle" style="color: #2d5016;"></h2>
+        <div id="modalMeta"></div>
+        <div id="modalDescription"></div>
+        
+        <div class="gallery-section">
+          <h3><i class="fas fa-images"></i> Photo Gallery of <span id="galleryCraftName"></span></h3>
+          <div id="photoGalleryThumbs"></div>
+        </div>
+        
+        <div class="location-section">
+          <h4><i class="fas fa-map-marker-alt"></i> Where to Find Materials for This Craft</h4>
+          <div id="materialLocations"></div>
+          <button id="viewOnMapBtn" class="btn-map-view">
+            <i class="fas fa-map"></i> View Material Sources on Geotagged Map
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const locationData = [
+      { name: 'bancal', lat: 11.5592, lng: 123.1590, zoom: 16, address: 'Bancal Port, Carles, Iloilo, 5019' },
+      { name: 'cawayan', lat: 11.5284, lng: 123.0962, zoom: 16, address: 'Barangay Cawayan, Carles, Iloilo' },
+      { name: 'aslom', lat: 11.5300, lng: 123.0950, zoom: 16, address: 'Barangay Aslom, Carles, Iloilo' },
+      { name: 'gigantes', lat: 11.5760, lng: 123.3360, zoom: 13, address: 'Gigantes Island, Carles, Iloilo' },
+      { name: 'gigantes norte', lat: 11.5860, lng: 123.3370, zoom: 15, address: 'Gigantes Norte, Carles, Iloilo' },
+      { name: 'gigantes sur', lat: 11.5650, lng: 123.3350, zoom: 15, address: 'Gigantes Sur, Carles, Iloilo' },
+      { name: 'sicogon', lat: 11.4314, lng: 123.2500, zoom: 13, address: 'Sicogon Island, Carles, Iloilo' }
+    ];
+
+    const materials = [
+      { id: 'pandan', name: 'Pandan Leaves', type: 'Fragrant Weaver', origin: 'Barangay Bancal', sustainability: 'Renewable · Harvested sustainably', image: 'https://th.bing.com/th/id/OIP.iMK2JzsIT-Hu4CbRN1r2JQHaHa?w=173&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', locations: [{ name: 'Bancal Pandan Grove', lat: 11.5592, lng: 123.1590, address: 'Bancal Port, Carles, Iloilo, 5019' }] },
+      { id: 'seashell', name: 'Sea Shells', type: 'Coastal Resource', origin: 'Gigantes Island & Bancal', sustainability: 'Abundant · Regulated collection', image: 'https://th.bing.com/th/id/OIP.EaIraigIGNjS4ICoHS6kugHaGT?w=198&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', locations: [{ name: 'Bancal Fishport', lat: 11.5572, lng: 123.1606, address: 'Bancal Port, Carles, Iloilo, 5019' }, { name: 'Gigantes Island Shore', lat: 11.5860, lng: 123.3370, address: 'Gigantes Norte, Carles, Iloilo' }, { name: 'South Gigante Shore', lat: 11.5650, lng: 123.3350, address: 'Gigantes Sur, Carles, Iloilo' }] },
+      { id: 'buri', name: 'Buri / Buli Palm', type: 'Corypha Palm', origin: 'Barangay Aslom', sustainability: 'Grows 30 years · Harvest leaves sustainably', image: 'https://th.bing.com/th/id/OIP.4gOR70hlG9l6KZvrIgxqKgHaE6?w=212&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', locations: [{ name: 'Aslom Buri Plantation', lat: 11.5300, lng: 123.0950, address: 'Barangay Aslom, Carles, Iloilo' }] },
+      { id: 'bamboo', name: 'Bamboo', type: 'Kawayan', origin: 'Barangay Cawayan', sustainability: 'Fast-growing · Harvest in 3-5 years', image: 'https://th.bing.com/th/id/OIP.KE9Z960WCsV34O2xssk-AQAAAA?w=254&h=182&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', locations: [{ name: 'Cawayan Bamboo Forest', lat: 11.5284, lng: 123.0962, address: 'Barangay Cawayan, Carles, Iloilo' }] }
+    ];
+
+    const crafts = [
+      { id: 1, title: 'Pandan Woven Basket (Banig)', material: 'pandan', mainImage: 'https://th.bing.com/th/id/OIP.C3YONL5aBMvLnaEF63g7DAHaE8?w=254&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', galleryImages: ['https://th.bing.com/th/id/OIP.C3YONL5aBMvLnaEF63g7DAHaE8?w=254&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', 'https://th.bing.com/th/id/OIP.1hVLur6RqYmf4VxPXvZSYwHaHa?w=189&h=189&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', 'https://th.bing.com/th/id/OIP.iMK2JzsIT-Hu4CbRN1r2JQHaHa?w=173&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3'], description: 'Traditional Filipino basket using pandan leaves. A Carlesanon household essential.', culturalNote: 'Banig weaving is a heritage skill taught by elders in Bancal.' },
+      { id: 2, title: 'Gigantes Shell Wind Chime', material: 'seashell', mainImage: 'https://th.bing.com/th/id/OIP.IAvfVnBbybiauDht_uk27wHaNP?w=208&h=327&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', galleryImages: ['https://th.bing.com/th/id/OIP.IAvfVnBbybiauDht_uk27wHaNP?w=208&h=327&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', 'https://th.bing.com/th/id/OIP.EaIraigIGNjS4ICoHS6kugHaGT?w=198&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', 'https://th.bing.com/th/id/OIP.2DHBVCoc1QzkeImDvsHCzQHaJ1?w=208&h=277&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3'], description: 'Soothing chime from shells collected along Gigantes Island shores.', culturalNote: 'Shellcraft provides livelihood for families in Bancal and Gigantes.' },
+      { id: 3, title: 'Buri Palm Farmer Hat', material: 'buri', mainImage: 'https://th.bing.com/th/id/OIP.OGkS96VzVHd1zwsqieC7UQHaE7?w=264&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', galleryImages: ['https://th.bing.com/th/id/OIP.OGkS96VzVHd1zwsqieC7UQHaE7?w=264&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', 'https://th.bing.com/th/id/OIP.4gOR70hlG9l6KZvrIgxqKgHaE6?w=212&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', 'https://th.bing.com/th/id/OIP._-bNZV1EzI9FStcG-1cHfgHaEY?w=256&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3'], description: 'Traditional sun hat worn by Carles farmers and fishermen.', culturalNote: 'Buri hat weaving is a disappearing skill — this system helps preserve it.' },
+      { id: 4, title: 'Bamboo Raft Model (Katig)', material: 'bamboo', mainImage: 'https://th.bing.com/th/id/OIP.KE9Z960WCsV34O2xssk-AQAAAA?w=254&h=182&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', galleryImages: ['https://th.bing.com/th/id/OIP.KE9Z960WCsV34O2xssk-AQAAAA?w=254&h=182&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', 'https://th.bing.com/th/id/OIP.yBZWop-_7FM1v0r9sygmigHaHb?w=199&h=200&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3'], description: 'Miniature bamboo raft — a tribute to Carles\' fishing heritage.', culturalNote: 'Bamboo rafts (katig) are traditionally used by Carlesanon fishermen.' },
+      { id: 5, title: 'Pandan Placemat Set', material: 'pandan', mainImage: 'https://th.bing.com/th/id/OIP.1hVLur6RqYmf4VxPXvZSYwHaHa?w=189&h=189&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', galleryImages: ['https://th.bing.com/th/id/OIP.1hVLur6RqYmf4VxPXvZSYwHaHa?w=189&h=189&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', 'https://th.bing.com/th/id/OIP.C3YONL5aBMvLnaEF63g7DAHaE8?w=254&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3'], description: 'Elegant woven placemats for dining.', culturalNote: 'Bancal weavers produce placemats for local souvenir shops.' },
+      { id: 6, title: 'Bamboo Mini Chair (Silya)', material: 'bamboo', mainImage: 'https://th.bing.com/th/id/OIP.yBZWop-_7FM1v0r9sygmigHaHb?w=199&h=200&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', galleryImages: ['https://th.bing.com/th/id/OIP.yBZWop-_7FM1v0r9sygmigHaHb?w=199&h=200&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', 'https://th.bing.com/th/id/OIP.KE9Z960WCsV34O2xssk-AQAAAA?w=254&h=182&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3'], description: 'Decorative bamboo chair inspired by traditional Carles furniture.', culturalNote: 'Bamboo furniture-making is a craft passed down in Cawayan.' },
+      { id: 7, title: 'Shell Necklace (Kwintas)', material: 'seashell', mainImage: 'https://th.bing.com/th/id/OIP.2DHBVCoc1QzkeImDvsHCzQHaJ1?w=208&h=277&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', galleryImages: ['https://th.bing.com/th/id/OIP.2DHBVCoc1QzkeImDvsHCzQHaJ1?w=208&h=277&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', 'https://th.bing.com/th/id/OIP.IAvfVnBbybiauDht_uk27wHaNP?w=208&h=327&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3'], description: 'Elegant necklace made from polished Gigantes Island shells.', culturalNote: 'Shell jewelry is a popular souvenir for tourists visiting Gigantes.' },
+      { id: 8, title: 'Buri Market Bag (Bayong)', material: 'buri', mainImage: 'https://th.bing.com/th/id/OIP._-bNZV1EzI9FStcG-1cHfgHaEY?w=256&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', galleryImages: ['https://th.bing.com/th/id/OIP._-bNZV1EzI9FStcG-1cHfgHaEY?w=256&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', 'https://th.bing.com/th/id/OIP.OGkS96VzVHd1zwsqieC7UQHaE7?w=264&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3'], description: 'Sturdy eco-friendly shopping bag.', culturalNote: 'Bayong weaving is recognized by the DTI as a heritage craft.' }
+    ];
+
+    let mapInstance = null;
+    let selectedMaterialId = null;
+    let currentRating = 0;
+    let currentSearchTerm = '';
+    let currentSearchType = '';
+
+    window.handleSearch = function() {
+      const searchTerm = document.getElementById('heroSearchInput').value.toLowerCase().trim();
+      if (!searchTerm) return;
+      
+      const locationMatch = locationData.find(loc => loc.name.includes(searchTerm));
+      
+      if (locationMatch) {
+        showSection('map');
+        setTimeout(() => {
+          if (mapInstance) {
+            mapInstance.flyTo([locationMatch.lat, locationMatch.lng], locationMatch.zoom);
+            setTimeout(() => {
+              mapInstance.eachLayer((layer) => {
+                if (layer.getPopup && layer.getLatLng) {
+                  const latLng = layer.getLatLng();
+                  if (Math.abs(latLng.lat - locationMatch.lat) < 0.02 && Math.abs(latLng.lng - locationMatch.lng) < 0.02) {
+                    layer.openPopup();
+                  }
+                }
+              });
+            }, 500);
+          }
+        }, 300);
+        return;
+      }
+      
+      let matchedCrafts = [];
+      let searchType = '';
+      
+      const materialMatch = materials.find(m => m.id === searchTerm || m.name.toLowerCase().includes(searchTerm));
+      if (materialMatch) {
+        matchedCrafts = crafts.filter(c => c.material === materialMatch.id);
+        searchType = materialMatch.name;
+      } else {
+        matchedCrafts = crafts.filter(c => c.title.toLowerCase().includes(searchTerm));
+        if (matchedCrafts.length > 0) {
+          searchType = matchedCrafts[0].material;
+          const material = materials.find(m => m.id === searchType);
+          searchType = material ? material.name : searchType;
+        }
+      }
+      
+      if (matchedCrafts.length > 0) {
+        currentSearchTerm = searchTerm;
+        currentSearchType = searchType;
+        showSearchResults(matchedCrafts, searchType);
+      } else {
+        alert('No crafts found matching "' + searchTerm + '". Try: bamboo, pandan, shell, buri, or search a location like Bancal, Gigantes, Cawayan');
+      }
+    };
+    
+    function showSearchResults(filteredCrafts, materialName) {
+      showSection('crafts');
+      const messageDiv = document.getElementById('craftsSearchMessage');
+      messageDiv.style.display = 'flex';
+      messageDiv.innerHTML = `
+        <span><i class="fas fa-search"></i> Showing crafts made from <strong>${materialName}</strong> (${filteredCrafts.length} results)</span>
+        <button class="clear-search-btn" onclick="clearSearch()"><i class="fas fa-times"></i> Clear Search</button>
+      `;
+      const container = document.getElementById('allCrafts');
+      container.innerHTML = filteredCrafts.map(c => buildCraftCard(c)).join('');
+    }
+    
+    window.clearSearch = function() {
+      document.getElementById('craftsSearchMessage').style.display = 'none';
+      document.getElementById('heroSearchInput').value = '';
+      renderAllCrafts();
+      currentSearchTerm = '';
+      currentSearchType = '';
+    };
+
+    function buildCraftCard(c) {
+      return `<div class="craft-item" onclick="openCraftModal(${c.id})" onkeydown="if(event.key==='Enter') openCraftModal(${c.id})" tabindex="0">
+        <img src="${c.mainImage}" class="craft-image" alt="${c.title}" loading="lazy">
+        <div class="craft-details">
+          <div class="craft-title">${c.title}</div>
+          <div class="craft-description">${c.description.substring(0, 85)}${c.description.length > 85 ? '…' : ''}</div>
+          <div class="cultural-tag"><i class="fas fa-leaf"></i> ${c.culturalNote.substring(0, 60)}${c.culturalNote.length > 60 ? '…' : ''}</div>
+        </div>
+      </div>`;
+    }
+
+    function renderMaterials() {
+      const grid = document.getElementById('materialGrid');
+      grid.innerHTML = materials.map(mat => `<div class="material-card" onclick="selectMaterialById('${mat.id}', this)" onkeydown="if(event.key==='Enter') selectMaterialById('${mat.id}', this)" tabindex="0">
+        <img src="${mat.image}" class="material-image" alt="${mat.name}" loading="lazy">
+        <div class="material-info">
+          <div class="material-name">${mat.name}</div>
+          <div class="material-origin"><i class="fas fa-map-pin"></i> ${mat.origin}</div>
+          <div class="material-sustainability"><i class="fas fa-recycle"></i> ${mat.sustainability}</div>
+        </div>
+      </div>`).join('');
+    }
+
+    window.selectMaterialById = function(matId, element) {
+      selectedMaterialId = matId;
+      document.querySelectorAll('.material-card').forEach(c => c.classList.remove('selected'));
+      element.classList.add('selected');
+      
+      const filtered = crafts.filter(c => c.material === matId);
+      const detailDiv = document.getElementById('materialDetail');
+      const craftsContainer = document.getElementById('materialCrafts');
+      detailDiv.style.display = 'block';
+      craftsContainer.innerHTML = filtered.map(c => buildCraftCard(c)).join('');
+      
+      const selectedMaterial = materials.find(m => m.id === matId);
+      
+      const suggestions = crafts.filter(c => c.material !== matId).slice(0, 3);
+      const suggestionBox = document.getElementById('suggestionBox');
+      if (suggestions.length > 0) {
+        suggestionBox.innerHTML = `<h3><i class="fas fa-lightbulb"></i> You might also like...</h3><div class="suggestion-items">${suggestions.map(s => `<div class="suggestion-chip" onclick="openCraftModal(${s.id})"><i class="fas fa-hand-peace"></i> ${s.title}</div>`).join('')}</div><p style="font-size: 0.75rem; margin-top: 0.8rem; color: #5a6e5a;"><i class="fas fa-info-circle"></i> Based on your interest in ${selectedMaterial?.name}</p>`;
+      }
+      
+      detailDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    function renderAllCrafts() {
+      const container = document.getElementById('allCrafts');
+      container.innerHTML = crafts.map(c => buildCraftCard(c)).join('');
+    }
+
+    function initStarRating() {
+      const stars = document.querySelectorAll('.star');
+      stars.forEach(star => {
+        star.addEventListener('click', function() {
+          currentRating = parseInt(this.dataset.rating);
+          stars.forEach((s, index) => {
+            if (index < currentRating) s.classList.add('active');
+            else s.classList.remove('active');
+          });
+        });
+      });
+    }
+
+    window.submitReview = function() {
+      if (currentRating === 0) {
+        alert('Please select a rating (1-5 stars)');
+        return;
+      }
+      
+      const reviewerName = document.getElementById('reviewerName').value.trim();
+      const reviewComment = document.getElementById('reviewComment').value.trim();
+      
+      if (!reviewComment) {
+        alert('Please write a review comment');
+        return;
+      }
+      
+      const reviews = JSON.parse(localStorage.getItem('carlesReviews') || '[]');
+      reviews.push({
+        id: Date.now(),
+        name: reviewerName || 'Anonymous',
+        rating: currentRating,
+        comment: reviewComment,
+        date: new Date().toISOString()
+      });
+      localStorage.setItem('carlesReviews', JSON.stringify(reviews));
+      
+      alert('Thank you for your review! #CarlesdaBest\n\nYour feedback helps improve Carles tourism!');
+      
+      currentRating = 0;
+      document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
+      document.getElementById('reviewerName').value = '';
+      document.getElementById('reviewComment').value = '';
+      
+      loadReviews();
+    };
+
+    window.exportReviews = function() {
+      const reviews = JSON.parse(localStorage.getItem('carlesReviews') || '[]');
+      if (reviews.length === 0) {
+        alert('No reviews to export yet!');
+        return;
+      }
+      
+      let csvContent = "Name,Rating,Comment,Date\n";
+      reviews.forEach(review => {
+        csvContent += `"${review.name}","${review.rating}","${review.comment.replace(/"/g, '""')}","${review.date}"\n`;
+      });
+      
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `carles_reviews_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      alert(`Exported ${reviews.length} reviews!`);
+    };
+    
+    window.printReviews = function() {
+      const reviews = JSON.parse(localStorage.getItem('carlesReviews') || '[]');
+      const totalRating = reviews.reduce((a,b) => a + b.rating, 0);
+      const avgRating = reviews.length > 0 ? (totalRating / reviews.length).toFixed(1) : 0;
+      
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Carles Handicraft - Visitor Reviews Report</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; }
+              h1 { color: #2d5016; }
+              .stats { background: #e9f5db; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+              .review { border-bottom: 1px solid #ccc; padding: 15px 0; }
+              .stars { color: #ffc107; }
+              @media print {
+                button { display: none; }
+              }
+            </style>
+          </head>
+          <body>
+            <h1>🏝️ Carles Handicraft System</h1>
+            <h2>Visitor Reviews Report</h2>
+            <div class="stats">
+              <p><strong>Total Reviews:</strong> ${reviews.length}</p>
+              <p><strong>Average Rating:</strong> ${avgRating} ★</p>
+              <p><strong>Report Date:</strong> ${new Date().toLocaleString()}</p>
+              <p><strong>#CarlesdaBest</strong></p>
+            </div>
+            ${reviews.slice().reverse().map(r => `
+              <div class="review">
+                <strong>${r.name || 'Anonymous'}</strong> - 
+                <span class="stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span>
+                <br>
+                <small>${new Date(r.date).toLocaleDateString()}</small>
+                <p>${r.comment}</p>
+              </div>
+            `).join('')}
+            <p style="margin-top: 30px; text-align: center; color: #666;">
+              Generated by Carles Handicraft Suggestion System | Municipality of Carles, Iloilo
+            </p>
+          </body>
+        </html>
+      `);
+      printWindow.print();
+    };
+
+    function loadReviews() {
+      const reviews = JSON.parse(localStorage.getItem('carlesReviews') || '[]');
+      const reviewsList = document.getElementById('reviewsList');
+      if (reviews.length === 0) {
+        reviewsList.innerHTML = '<p style="text-align:center; color:#999;">No reviews yet. Be the first to share your experience! #CarlesdaBest</p>';
+        document.getElementById('avgRating').textContent = '0.0';
+        document.getElementById('totalReviews').textContent = '0 reviews';
+        document.getElementById('avgStars').textContent = '☆☆☆☆☆';
+        return;
+      }
+      let totalRating = 0;
+      reviews.forEach(review => totalRating += review.rating);
+      const avgRating = (totalRating / reviews.length).toFixed(1);
+      const fullStars = Math.floor(avgRating);
+      const starsDisplay = '★'.repeat(fullStars) + '☆'.repeat(5 - fullStars);
+      document.getElementById('avgRating').textContent = avgRating;
+      document.getElementById('totalReviews').textContent = `${reviews.length} reviews`;
+      document.getElementById('avgStars').textContent = starsDisplay;
+      reviewsList.innerHTML = reviews.slice().reverse().map(review => `<div class="review-item"><div class="review-header"><span class="reviewer-name"><i class="fas fa-user"></i> ${escapeHtml(review.name)}</span><span class="review-rating">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</span><span class="review-date">${new Date(review.date).toLocaleDateString()}</span></div><div class="review-comment">"${escapeHtml(review.comment)}"</div></div>`).join('');
+    }
+
+    function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+
+    function initMap() {
+      if (mapInstance) mapInstance.remove();
+      mapInstance = L.map('map').setView([11.5572, 123.1606], 11);
+      L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '&copy; Google', maxZoom: 20 }).addTo(mapInstance);
+      materials.forEach(mat => {
+        mat.locations.forEach(loc => {
+          const icon = L.divIcon({ html: '<div style="background: #2d5016; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 2px solid white;"><i class="fas fa-leaf" style="font-size: 12px;"></i></div>', iconSize: [28, 28] });
+          L.marker([loc.lat, loc.lng], { icon: icon }).addTo(mapInstance).bindPopup(`<b>${loc.name}</b><br>🌿 ${mat.name}<br>📍 ${loc.address}`);
+        });
+      });
+      const islandMarker = L.divIcon({ html: '<div style="background: #006994; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: 2px solid white;"><i class="fas fa-island" style="font-size: 10px;"></i></div>', iconSize: [24, 24] });
+      L.marker([11.5860, 123.3370], { icon: islandMarker }).addTo(mapInstance).bindPopup('<b>Gigantes Norte</b><br>Shell collection area');
+      L.marker([11.5650, 123.3350], { icon: islandMarker }).addTo(mapInstance).bindPopup('<b>Gigantes Sur</b><br>Local crafts');
+      const locationDiv = document.getElementById('locationList');
+      const items = materials.flatMap(mat => mat.locations.map(loc => ({ name: loc.name, address: loc.address, lat: loc.lat, lng: loc.lng, material: mat.name })));
+      items.push({ name: 'Gigantes Norte', address: 'Gigantes Island, Carles, Iloilo', lat: 11.5860, lng: 123.3370, material: 'Shell Collection' }, { name: 'Gigantes Sur', address: 'Gigantes Island, Carles, Iloilo', lat: 11.5650, lng: 123.3350, material: 'Shell Collection' });
+      locationDiv.innerHTML = items.map(item => `<div class="location-item" onclick="if(window.mapInstance) window.mapInstance.flyTo([${item.lat}, ${item.lng}], 14)"><div class="location-name"><i class="fas fa-map-pin"></i> ${item.name}</div><div class="location-address">${item.address} · <strong>${item.material}</strong> source</div></div>`).join('');
+      window.mapInstance = mapInstance;
+    }
+
+    function setupMapControls() {
+      document.getElementById('zoomToBancal')?.addEventListener('click', () => mapInstance?.flyTo([11.5592, 123.1590], 16));
+      document.getElementById('zoomToCawayan')?.addEventListener('click', () => mapInstance?.flyTo([11.5284, 123.0962], 16));
+      document.getElementById('zoomToAslom')?.addEventListener('click', () => mapInstance?.flyTo([11.5300, 123.0950], 16));
+      document.getElementById('zoomToGigantes')?.addEventListener('click', () => mapInstance?.flyTo([11.5760, 123.3360], 13));
+      document.getElementById('zoomToSicogon')?.addEventListener('click', () => mapInstance?.flyTo([11.4314, 123.2500], 13));
+      document.getElementById('resetMap')?.addEventListener('click', () => mapInstance?.flyTo([11.5572, 123.1606], 11));
+    }
+
+    window.openCraftModal = function(id) {
+      const craft = crafts.find(c => c.id === id);
+      if (!craft) return;
+      const modal = document.getElementById('craftModal');
+      const mainImage = document.getElementById('modalMainImage');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalDescription = document.getElementById('modalDescription');
+      const modalMeta = document.getElementById('modalMeta');
+      const galleryThumbs = document.getElementById('photoGalleryThumbs');
+      const materialLocations = document.getElementById('materialLocations');
+      const galleryCraftName = document.getElementById('galleryCraftName');
+      
+      mainImage.src = craft.mainImage;
+      modalTitle.textContent = craft.title;
+      galleryCraftName.textContent = craft.title;
+      modalDescription.innerHTML = `${craft.description}<br><br><i class="fas fa-history"></i> <strong>Cultural Heritage:</strong> ${craft.culturalNote}`;
+      modalMeta.innerHTML = ``;
+      
+      galleryThumbs.innerHTML = craft.galleryImages.map((img, index) => `<img src="${img}" class="gallery-thumb ${index === 0 ? 'active' : ''}" onclick="changeGalleryImage('${img}', this)" alt="Gallery image ${index + 1}">`).join('');
+      
+      const material = materials.find(m => m.id === craft.material);
+      if (material && material.locations) {
+        materialLocations.innerHTML = material.locations.map(loc => `<span class="location-tag"><i class="fas fa-map-pin"></i> ${loc.name} - ${loc.address}</span>`).join('');
+        const viewMapBtn = document.getElementById('viewOnMapBtn');
+        viewMapBtn.onclick = function() {
+          closeCraftModal();
+          showSection('map');
+          setTimeout(() => {
+            if (window.mapInstance && material.locations[0]) {
+              window.mapInstance.flyTo([material.locations[0].lat, material.locations[0].lng], 14);
+              setTimeout(() => {
+                window.mapInstance.eachLayer((layer) => {
+                  if (layer.getPopup && layer.getLatLng) {
+                    const latLng = layer.getLatLng();
+                    if (Math.abs(latLng.lat - material.locations[0].lat) < 0.01 && Math.abs(latLng.lng - material.locations[0].lng) < 0.01) {
+                      layer.openPopup();
+                    }
+                  }
+                });
+              }, 500);
+            }
+          }, 300);
+        };
+      }
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.changeGalleryImage = function(imageUrl, thumbnailElement) {
+      document.getElementById('modalMainImage').src = imageUrl;
+      document.querySelectorAll('.gallery-thumb').forEach(thumb => thumb.classList.remove('active'));
+      thumbnailElement.classList.add('active');
+    };
+
+    window.closeCraftModal = function() {
+      document.getElementById('craftModal').style.display = 'none';
+      document.body.style.overflow = '';
+    };
+
+    function showSection(section) {
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+      if (section === 'materials') {
+        document.getElementById('tabMaterials').classList.add('active');
+        document.getElementById('materials').classList.add('active');
+      } else if (section === 'crafts') {
+        document.getElementById('tabCrafts').classList.add('active');
+        document.getElementById('crafts').classList.add('active');
+        if (!currentSearchTerm) {
+          renderAllCrafts();
+        }
+      } else if (section === 'map') {
+        document.getElementById('tabMap').classList.add('active');
+        document.getElementById('map-section').classList.add('active');
+        setTimeout(() => { if (!mapInstance) initMap(); else mapInstance.invalidateSize(); setupMapControls(); }, 100);
+      } else if (section === 'about') {
+        document.getElementById('tabAbout').classList.add('active');
+        document.getElementById('about').classList.add('active');
+      }
+      if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+    }
+
+    document.getElementById('menuToggle').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('open'));
+    document.getElementById('tabMaterials').addEventListener('click', () => showSection('materials'));
+    document.getElementById('tabCrafts').addEventListener('click', () => showSection('crafts'));
+    document.getElementById('tabMap').addEventListener('click', () => showSection('map'));
+    document.getElementById('tabAbout').addEventListener('click', () => showSection('about'));
+    
+    document.getElementById('heroSearchInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') handleSearch();
+    });
+    
+    document.addEventListener('click', (e) => {
+      const sidebar = document.getElementById('sidebar');
+      const menuToggle = document.getElementById('menuToggle');
+      if (window.innerWidth <= 768 && sidebar.classList.contains('open')) {
+        if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) sidebar.classList.remove('open');
+      }
+    });
+    
+    window.addEventListener('click', (e) => { if (e.target === document.getElementById('craftModal')) closeCraftModal(); });
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCraftModal(); });
+
+    renderMaterials();
+    renderAllCrafts();
+    initStarRating();
+    loadReviews();
+    console.log("Carles Handicraft System Ready! #CarlesdaBest");
+  </script>
+</body>
+</html>
